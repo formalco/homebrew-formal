@@ -6,7 +6,7 @@ class Formal < Formula
     version "0.1.0"
   
     def install
-      bin.install "formal"
+      bin.install "formalcli-darwin-arm64"
     end
   end
   
