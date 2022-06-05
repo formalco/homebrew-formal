@@ -1,7 +1,7 @@
 class Formal < Formula
     desc "The Formal CLI"
     homepage "https://github.com/formalco/cli"
-    version "0.4.0"
+    version "0.5.0"
 
     on_macos do
       if Hardware::CPU.intel?
