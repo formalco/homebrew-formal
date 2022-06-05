@@ -31,7 +31,6 @@ class Formal < Formula
           bin.install "formal"
         end
       end
-
       if Hardware::CPU.arm?
         url "https://formal-public.s3.eu-west-1.amazonaws.com/release/formalcli-linux-arm64.tar.gz"
         sha256 "262431dc45f1ff25796f7ac0139206fdcaaa19b70a9729cb3073620fbca6adfc"
@@ -39,6 +38,7 @@ class Formal < Formula
         def install
           bin.install "formal"
         end
+      end
     end
 end
   
