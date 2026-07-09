@@ -20,9 +20,9 @@ cask "desktop" do
 
   uninstall quit:    "com.formal.desktop",
             script:  {
-              executable: "/usr/local/bin/formal",
-              args:       ["uninstall", "--yes"],
-              sudo:       false,
+              executable:   "/usr/local/bin/formal",
+              args:         ["uninstall", "--yes"],
+              sudo:         false,
               must_succeed: false,
             },
             pkgutil: "com.formal.desktop"
