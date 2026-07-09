@@ -2,7 +2,8 @@ cask "desktop" do
   version "0.22.1"
   sha256 "894337923f49fce8aa898aa983120139dd60cb8da9d555e22a69ea88c6eeabae"
 
-  url "https://static-assets.formalcloud.net/desktop-app/darwin/formal-#{version}.pkg"
+  url "https://static-assets.formalcloud.net/desktop-app/darwin/formal-#{version}.pkg",
+    verified: "static-assets.formalcloud.net"
   name "Formal Desktop"
   desc "Formal Desktop app"
   homepage "https://formal.ai/"
