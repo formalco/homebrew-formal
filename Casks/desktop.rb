@@ -4,8 +4,8 @@ cask "desktop" do
 
   url "https://static-assets.formalcloud.net/desktop-app/darwin/formal-#{version}.pkg"
   name "Formal Desktop"
-  desc "The Formal Desktop app"
-  homepage "https://joinformal.com"
+  desc "Formal Desktop app"
+  homepage "https://formal.ai/"
 
   livecheck do
     url "https://static-assets.formalcloud.net/desktop-app/VERSION"
@@ -13,7 +13,7 @@ cask "desktop" do
     regex(/(\S+)/)
   end
 
-  depends_on macos: ">= :sequoia"
+  depends_on macos: :sequoia
 
   pkg "formal-#{version}.pkg"
 
