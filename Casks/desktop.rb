@@ -2,10 +2,11 @@ cask "desktop" do
   version "0.22.1"
   sha256 "894337923f49fce8aa898aa983120139dd60cb8da9d555e22a69ea88c6eeabae"
 
-  url "https://static-assets.formalcloud.net/desktop-app/darwin/formal-#{version}.pkg"
+  url "https://static-assets.formalcloud.net/desktop-app/darwin/formal-#{version}.pkg",
+      verified: "static-assets.formalcloud.net/"
   name "Formal Desktop"
-  desc "The Formal Desktop app"
-  homepage "https://joinformal.com"
+  desc "Formal Desktop app"
+  homepage "https://formal.ai/"
 
   livecheck do
     url "https://static-assets.formalcloud.net/desktop-app/VERSION"
@@ -13,7 +14,7 @@ cask "desktop" do
     regex(/(\S+)/)
   end
 
-  depends_on macos: ">= :sequoia"
+  depends_on macos: :sequoia
 
   pkg "formal-#{version}.pkg"
 

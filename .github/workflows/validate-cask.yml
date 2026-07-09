@@ -1,0 +1,136 @@
+name: Validate cask
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Casks/**"
+      - ".github/workflows/validate-cask.yml"
+  pull_request:
+    paths:
+      - "Casks/**"
+      - ".github/workflows/validate-cask.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: validate-cask-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Style & audit
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout tap
+        uses: actions/checkout@v4
+
+      - name: Tap this repo into Homebrew
+        # Register the checkout as the official tap name so `brew` commands can
+        # reference `formalco/formal/<cask>` and audit runs with tap context.
+        run: |
+          TAP_DIR="$(brew --repository)/Library/Taps/formalco/homebrew-formal"
+          mkdir -p "$(dirname "$TAP_DIR")"
+          ln -s "$GITHUB_WORKSPACE" "$TAP_DIR"
+          brew tap-info formalco/formal
+
+      - name: brew style
+        run: brew style --cask formalco/formal/desktop
+
+      - name: brew audit
+        # --online validates that the `url` and `homepage` are reachable and that
+        # livecheck is configured correctly. --new is skipped since the cask exists.
+        run: brew audit --cask --online --strict formalco/formal/desktop
+
+  install:
+    name: Install / uninstall on macOS
+    needs: lint
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout tap
+        uses: actions/checkout@v4
+
+      - name: Tap this repo into Homebrew
+        run: |
+          TAP_DIR="$(brew --repository)/Library/Taps/formalco/homebrew-formal"
+          mkdir -p "$(dirname "$TAP_DIR")"
+          ln -s "$GITHUB_WORKSPACE" "$TAP_DIR"
+
+      - name: Show cask metadata
+        run: brew info --cask formalco/formal/desktop
+
+      - name: Install cask
+        # Installs the signed/notarized .pkg via macOS `installer`. This verifies
+        # the download URL resolves, the sha256 matches, and the pkg is accepted.
+        run: brew install --cask --verbose formalco/formal/desktop
+
+      - name: Verify pkgutil receipt is registered
+        run: |
+          echo "Installed package receipts:"
+          pkgutil --pkgs | grep -i 'com.formal.desktop' || {
+            echo "::error::Expected pkgutil receipt 'com.formal.desktop' not found after install"
+            exit 1
+          }
+          pkgutil --pkg-info com.formal.desktop
+
+      - name: Verify the app bundle landed
+        run: |
+          # The pkg installs Formal.app; confirm it exists and is code-signed / notarized.
+          APP="/Applications/Formal.app"
+          if [ ! -d "$APP" ]; then
+            echo "::error::$APP not found after install"
+            exit 1
+          fi
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          spctl --assess --type execute --verbose=4 "$APP"
+
+      - name: Verify the formal CLI is on PATH and runnable
+        run: |
+          # The pkg's postinstall script (postinstall_darwin.go) symlinks
+          # /usr/local/bin/formal into the installed Formal.app bundle.
+          # /usr/local/bin is on PATH by default on the runner.
+          if ! command -v formal >/dev/null 2>&1; then
+            echo "::error::'formal' CLI was not found on PATH after install"
+            exit 1
+          fi
+
+          FORMAL_BIN="$(command -v formal)"
+          RESOLVED="$(readlink -f "$FORMAL_BIN")"
+          echo "Found formal CLI at: $FORMAL_BIN"
+          echo "Resolves to: $RESOLVED"
+
+          case "$RESOLVED" in
+            /Applications/Formal.app/*) ;;
+            *)
+              echo "::error::'formal' resolves to $RESOLVED, expected something inside /Applications/Formal.app"
+              exit 1
+              ;;
+          esac
+
+          if [ ! -x "$FORMAL_BIN" ]; then
+            echo "::error::'formal' at $FORMAL_BIN is not executable"
+            exit 1
+          fi
+
+          echo "Running 'formal version':"
+          formal version
+
+      - name: Uninstall cask
+        # Confirms the `uninstall`/`zap` stanzas run cleanly with no leftover receipts.
+        run: |
+          brew uninstall --cask --verbose --zap formalco/formal/desktop
+          if pkgutil --pkgs | grep -qi 'com.formal.desktop'; then
+            echo "::error::pkgutil receipt still present after uninstall"
+            exit 1
+          fi
+          # The /usr/local/bin/formal symlink is created by the pkg postinstall
+          # script, not by Homebrew, so brew uninstall does not remove it. If it
+          # remains, it is a dangling symlink pointing at the deleted app bundle.
+          if [ -L /usr/local/bin/formal ] && [ ! -e /usr/local/bin/formal ]; then
+            echo "::error::/usr/local/bin/formal is a dangling symlink after uninstall (pkg postinstall did not clean it up)"
+            exit 1
+          fi
