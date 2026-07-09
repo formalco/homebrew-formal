@@ -19,7 +19,13 @@ cask "desktop" do
   pkg "formal-#{version}.pkg"
 
   uninstall quit:    "com.formal.desktop",
+            script:  {
+              executable: "/usr/local/bin/formal",
+              args:       ["uninstall", "--yes"],
+              sudo:       false,
+              must_succeed: false,
+            },
             pkgutil: "com.formal.desktop"
 
-  zap trash: ["~/.formal", "~/Library/Application Support/formal", "~/Library/Logs/formal", "~/Library/Logs/Formal"]
+  zap trash: ["~/.formal", "~/Library/Application Support/Formal", "~/Library/Logs/Formal"]
 end
