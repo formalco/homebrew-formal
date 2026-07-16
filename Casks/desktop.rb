@@ -1,6 +1,6 @@
 cask "desktop" do
-  version "0.25.1"
-  sha256 "a08d3e297f5eab422620b760e343667f78b217c2d835b6f64a9794d683e83dda"
+  version "0.25.2"
+  sha256 "f4b38ed7458e92234c8ea670be374c491a26ada3b172708f2892a8f5e7f2e0f6"
 
   url "https://static-assets.formalcloud.net/desktop-app/darwin/formal-#{version}.pkg",
       verified: "static-assets.formalcloud.net/"
